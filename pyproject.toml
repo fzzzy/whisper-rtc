@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "whisper-rtc"
+version = "0.1.0"
+description = ""
+authors = ["Donovan Preston <donovanpreston@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.11.4"
+fastapi = "^0.103.1"
+aiortc = "^1.5.0"
+pydantic = "^2.4.0"
+uvicorn = "^0.23.2"
+numpy = "^1.26.0"
+pydub = "^0.25.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

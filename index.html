@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>whisper RTC</title>
+</head>
+<script>
+
+(async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        const audioTrack = stream.getAudioTracks()[0];
+        const pc = new RTCPeerConnection();
+        pc.addTrack(audioTrack, stream);
+
+        // Create Data Channel
+        const dataChannel = pc.createDataChannel("data");
+
+        // Handle Data Channel events here
+        dataChannel.onmessage = (event) => {
+            console.log("Message:", event.data);
+        };
+
+        try {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+
+            const response = await fetch('/offer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    sdp: pc.localDescription.sdp,
+                    type: pc.localDescription.type
+                })
+            });
+
+            const answer = await response.json();
+            await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    })();
+</script>
+
+<body>
+
+Hello
+
+</body>
+
+</html>
