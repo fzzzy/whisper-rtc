@@ -7,8 +7,8 @@ from pydub import AudioSegment
 def detect_silence(
     audio_data,
     sample_rate=48000,
-    window_length=0.25,
-    threshold=5e-3
+    window_length=0.125,
+    threshold=3e-3
 ):
     window_size = int(window_length * sample_rate)
     # 0.5 sec * 48k = 24k samples

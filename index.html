@@ -3,74 +3,92 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>whisper RTC</title>
+    <title>Whisper RTC</title>
     <style type="text/css">
-        .out { padding: 0.25em }
+.out { padding: 0.25em }
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
     </style>
 </head>
 <script>
 
 
+async function async_record() {
+    const stream = await navigator.mediaDevices.getUserMedia(
+        { audio: true, video: false });
+    const audioTrack = stream.getAudioTracks()[0];
+    const pc = new RTCPeerConnection();
+    const close = () => {
+        console.log("stop");
+        pc.close();
+        const node = document.createElement("div");
+        node.textContent = "Stopped.";
+        document.body.appendChild(node);
+        const record = document.getElementById("record");
+        record.textContent = "Record";
+        record.onclick = record;
+    }
+    pc.addTrack(audioTrack, stream);
 
-(async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        const audioTrack = stream.getAudioTracks()[0];
-        const pc = new RTCPeerConnection();
-        const close = (e) => {
-            console.log("stop");
-            pc.close();
-            e.target.remove();
-            const node = document.createElement("div");
-            node.textContent = "Stopped.";
-            document.body.appendChild(node);
-        }
-        pc.addTrack(audioTrack, stream);
+    // Create Data Channel
+    const dataChannel = pc.createDataChannel("data");
 
-        // Create Data Channel
-        const dataChannel = pc.createDataChannel("data");
+    // Handle Data Channel events here
+    dataChannel.onmessage = (event) => {
+        console.log("Message:", event.data);
+        const node = document.createElement("span");
+        node.textContent = event.data;
+        node.className = "out";
+        document.body.appendChild(node);
+    };
 
-        // Handle Data Channel events here
-        dataChannel.onmessage = (event) => {
-            console.log("Message:", event.data);
-            const node = document.createElement("span");
-            node.textContent = event.data;
-            node.className = "out";
-            document.body.appendChild(node);
-        };
+    try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
 
-        try {
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
+        const response = await fetch('/offer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                sdp: pc.localDescription.sdp,
+                type: pc.localDescription.type
+            })
+        });
 
-            const response = await fetch('/offer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    sdp: pc.localDescription.sdp,
-                    type: pc.localDescription.type
-                })
-            });
+        const answer = await response.json();
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        const node = document.createElement("div");
+        node.textContent = "Recording...";
+        document.body.appendChild(node);
+        const stop = document.getElementById("record");
+        stop.textContent = "Stop";
+        stop.onclick = close;
+    } catch (error) {
+        console.error("Error:", error);
+    }
+}
 
-            const answer = await response.json();
-            await pc.setRemoteDescription(new RTCSessionDescription(answer));
-            const node = document.createElement("div");
-            node.textContent = "Recording...";
-            document.body.appendChild(node);
-            const node2 = document.createElement("button");
-            node2.textContent = "Stop";
-            node2.onclick = close;
-            document.body.appendChild(node2);
-        } catch (error) {
-            console.error("Error:", error);
-        }
-    })();
+
+function record() {
+    console.log("record");
+    async_record().then(
+        ()=>console.log("done"))
+    .catch(
+        (e) => console.log("error", e));
+}
+
+
 </script>
 
 <body>
 
-Hello
+<h1>Whisper RTC</h1>
+
+<button id="record" onclick="record()">Record</button>
 
 </body>
 
