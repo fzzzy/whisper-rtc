@@ -3,8 +3,6 @@
 import numpy as np
 from pydub import AudioSegment
 
-RMSS = np.array([])
-
 
 def detect_silence(
     audio_data,
@@ -12,7 +10,6 @@ def detect_silence(
     window_length=0.5,
     threshold=5e-3
 ):
-    silence_points = []
     window_size = int(window_length * sample_rate)
     # 0.5 sec * 48k = 24k samples
     n_windows = len(audio_data) // window_size
@@ -25,8 +22,6 @@ def detect_silence(
         end = (i + 1) * window_size
 
         rms = np.sqrt(np.mean(np.square(audio_data[start:end])))
-
-        #print(rms, threshold)
 
         if rms < threshold:
             return (start, end)

@@ -45,14 +45,14 @@ async def handle_offer(offer: Offer):
         if isinstance(track, MediaStreamTrack):
             samples = None
             i = 0
-            min_data_length = int(1 * 48000)  # 1 second for instance
             while True:
                 try:
                     frame = await track.recv()
                     if samples is None:
-                        print("\n\n\n\n\nFRAME\n\n\n\n\nFRAME\n\n\n\n\n\nFRAME")
+                        min_data_length = int(2 * frame.sample_rate)
+                        print("Recording...")
                 except MediaStreamError:
-                    print("disconnected", len(samples))
+                    print("Disconnected")
                     audioproc.save_as_mp3(
                         samples, frame.sample_rate, i)
                     return
@@ -82,7 +82,6 @@ async def handle_offer(offer: Offer):
                         samples[:start_sample], frame.sample_rate, i)
                     i += 1
                     samples = samples[end_sample:]
-
 
     await pc.setRemoteDescription(offer_sdp)
     answer = await pc.createAnswer()
