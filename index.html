@@ -4,13 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <title>whisper RTC</title>
+    <style type="text/css">
+        .out { padding: 0.25em }
+    </style>
 </head>
 <script>
+
+
 
 (async () => {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         const audioTrack = stream.getAudioTracks()[0];
         const pc = new RTCPeerConnection();
+        const close = (e) => {
+            console.log("stop");
+            pc.close();
+            e.target.remove();
+            const node = document.createElement("div");
+            node.textContent = "Stopped.";
+            document.body.appendChild(node);
+        }
         pc.addTrack(audioTrack, stream);
 
         // Create Data Channel
@@ -21,6 +34,7 @@
             console.log("Message:", event.data);
             const node = document.createElement("span");
             node.textContent = event.data;
+            node.className = "out";
             document.body.appendChild(node);
         };
 
@@ -44,6 +58,10 @@
             const node = document.createElement("div");
             node.textContent = "Recording...";
             document.body.appendChild(node);
+            const node2 = document.createElement("button");
+            node2.textContent = "Stop";
+            node2.onclick = close;
+            document.body.appendChild(node2);
         } catch (error) {
             console.error("Error:", error);
         }
