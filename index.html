@@ -19,6 +19,9 @@
         // Handle Data Channel events here
         dataChannel.onmessage = (event) => {
             console.log("Message:", event.data);
+            const node = document.createElement("span");
+            node.textContent = event.data;
+            document.body.appendChild(node);
         };
 
         try {
@@ -38,6 +41,9 @@
 
             const answer = await response.json();
             await pc.setRemoteDescription(new RTCSessionDescription(answer));
+            const node = document.createElement("div");
+            node.textContent = "Recording...";
+            document.body.appendChild(node);
         } catch (error) {
             console.error("Error:", error);
         }

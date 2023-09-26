@@ -1,5 +1,5 @@
 
-
+import io
 import numpy as np
 from pydub import AudioSegment
 
@@ -7,7 +7,7 @@ from pydub import AudioSegment
 def detect_silence(
     audio_data,
     sample_rate=48000,
-    window_length=0.5,
+    window_length=0.25,
     threshold=5e-3
 ):
     window_size = int(window_length * sample_rate)
@@ -34,5 +34,7 @@ def save_as_mp3(samples, sample_rate, filename):
         sample_width=2,
         channels=1
     )
-    audio.export(f"{filename}.mp3", format="mp3")
+    f = io.BytesIO()
+    f.name = "a.mp3"
+    return audio.export(f, format="mp3")
 

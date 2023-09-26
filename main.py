@@ -6,6 +6,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 import numpy
+import os
+import openai
 from pydantic import BaseModel
 
 import audioproc
@@ -30,11 +32,13 @@ class Offer(BaseModel):
 async def handle_offer(offer: Offer):
     pc = RTCPeerConnection()
     offer_sdp = RTCSessionDescription(sdp=offer.sdp, type=offer.type)
-
+    channel = None
     @pc.on("datachannel")
-    def on_datachannel(channel):
+    def on_datachannel(c):
         print("Debug: Datachannel event triggered")
         # Handle data channel events here
+        nonlocal channel
+        channel = c
 
     @pc.on("iceconnectionstatechange")
     def on_iceconnectionstatechange():
@@ -53,8 +57,7 @@ async def handle_offer(offer: Offer):
                         print("Recording...")
                 except MediaStreamError:
                     print("Disconnected")
-                    audioproc.save_as_mp3(
-                        samples, frame.sample_rate, i)
+                    ## Just discard the unprocessed samples as the peer is no longer there
                     return
 
                 # Accumulate samples
@@ -78,8 +81,13 @@ async def handle_offer(offer: Offer):
                         samples = samples[end_sample:]
                         continue
                     print("saving segment", i, start_sample)
-                    audioproc.save_as_mp3(
+                    o = audioproc.save_as_mp3(
                         samples[:start_sample], frame.sample_rate, i)
+                    transcript = openai.Audio.transcribe("whisper-1", o)
+                    print(transcript)
+                    if channel is not None:
+                        channel.send(transcript["text"])
+
                     i += 1
                     samples = samples[end_sample:]
 
